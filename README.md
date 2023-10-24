@@ -4,7 +4,7 @@ A tool that supports GraphQL-Java asynchronous chain calls to DataLoader. Curren
 ### Features
 - Supports asynchronous and chained calls of DataLoader in GraphQL-Java Fetcher.
 - Single-threaded asynchronous.
-- Better performance.
+- Better performance. Does not rely on instrumentation, has no counting and concurrent locks.
 
 
 ### Notice
@@ -33,6 +33,7 @@ GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema)
         .doNotAddDefaultInstrumentations()
         .build();
 ExecutionInput graphQL = ... //buildExecutionInput();
+// All fetchers are executed asynchronously on the current thread.
 ExecutionResult result = GraphQLEventLoopDispatcher.run(graphQL, input);
 ```
 
@@ -47,29 +48,30 @@ DataFetcher<CompletableFuture<String>> dataFetcher = new DataFetcher<Completable
     public CompletableFuture<String> get(DataFetchingEnvironment environment) {
         // using FixedExecutorFetchingEnvironment#load
         FixedExecutorFetchingEnvironment fixedEnv = new FixedExecutorFetchingEnvironment(environment);
-        Thread mainThread = Thread.currentThread();
-            return fixedEnv.load(CustomBatchLoader.KEY, "Hello_" + fixedEnv.getSource())
-                .thenCompose(result -> {
-                    Assert.assertTrue(Thread.currentThread() == mainThread);
-                    // using FixedExecutorFetchingEnvironment#load
-                    CompletableFuture<String> future = fixedEnv.load(CustomBatchLoader.KEY, result);
-                    return future;
-                })
-                
-                // or using FixedExecutorFetchingEnvironment#switchExecutor
-                .thenComposeAsync(result -> {
-                    Assert.assertTrue(Thread.currentThread() == mainThread);
-                    DataLoader<String, String> dataLoader = environment.getDataLoader(CustomBatchLoader.KEY);
-                    CompletableFuture<String> load = dataLoader.load(CustomBatchLoader.KEY, result);
-                    return fixedEnv.switchExecutor(load); // switch
-                })
-                
-                // or using GraphQLEventLoopDispatcher#getExecutor
-                .thenComposeAsync(result -> {
-                    Assert.assertTrue(Thread.currentThread() == mainThread);
-                    DataLoader<String, String> dataLoader = environment.getDataLoader(CustomBatchLoader.KEY);
-                    CompletableFuture<String> future = dataLoader.load(result);
-                }, GraphQLEventLoopDispatcher.getExecutor(environment)); // specify executor
+        Thread mainThread = Thread.currentThread(); // same thread as GraphQLEventLoopDispatcher.run
+        return fixedEnv.load(CustomBatchLoader.KEY, "Hello_" + fixedEnv.getSource())
+            .thenCompose(result -> {
+                // check thread will not switch
+                Assert.assertTrue(Thread.currentThread() == mainThread);
+                // using FixedExecutorFetchingEnvironment#load
+                CompletableFuture<String> future = fixedEnv.load(CustomBatchLoader.KEY, result);
+                return future;
+            })
+            
+            // or using FixedExecutorFetchingEnvironment#switchExecutor
+            .thenComposeAsync(result -> {
+                Assert.assertTrue(Thread.currentThread() == mainThread);
+                DataLoader<String, String> dataLoader = environment.getDataLoader(CustomBatchLoader.KEY);
+                CompletableFuture<String> load = dataLoader.load(CustomBatchLoader.KEY, result);
+                return fixedEnv.switchExecutor(load); // switch
+            })
+            
+            // or using GraphQLEventLoopDispatcher#getExecutor
+            .thenComposeAsync(result -> {
+                Assert.assertTrue(Thread.currentThread() == mainThread);
+                DataLoader<String, String> dataLoader = environment.getDataLoader(CustomBatchLoader.KEY);
+                CompletableFuture<String> future = dataLoader.load(result);
+            }, GraphQLEventLoopDispatcher.getExecutor(environment)); // specify executor
     }
 }
 ```
