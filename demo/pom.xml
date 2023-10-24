@@ -17,9 +17,7 @@
         <dependency>
             <groupId>io.github.blabla-yy</groupId>
             <artifactId>graphql-java-dispatcher</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../target/graphql-java-dispatcher-1.0-SNAPSHOT.jar</systemPath>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>

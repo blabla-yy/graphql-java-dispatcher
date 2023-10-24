@@ -6,9 +6,10 @@
 
     <groupId>io.github.blabla-yy</groupId>
     <artifactId>graphql-java-dispatcher</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
+    <name>graphql-java-dispatcher</name>
     <url>https://github.com/blabla-yy/graphql-java-dispatcher</url>
     <description>
         A tool that supports GraphQL-Java asynchronous chain calls to DataLoader.

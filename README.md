@@ -15,8 +15,16 @@ For heavy IO applications, the single-threaded model is better. It not only save
 2. Other components that may affect the Fetcher execution thread, such as instrumentation, also need to specify the Executor to ensure single threading.
 
 ### Demo
-1. doNotAddDefaultInstrumentations()
-2. Use GraphQLEventLoopDispatcher.run(graphQL, input) instead of graphQL.executeAsync(input).
+1. Add the dependency (Maven):
+```xml
+<dependency>
+    <groupId>io.github.blabla-yy</groupId>
+    <artifactId>graphql-java-dispatcher</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+2. doNotAddDefaultInstrumentations()
+3. Use GraphQLEventLoopDispatcher.run(graphQL, input) instead of graphQL.executeAsync(input).
 ```java
 GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema)
         // remove default instrumentation!
@@ -26,7 +34,7 @@ ExecutionInput graphQL = buildExecutionInput();
 ExecutionResult result = GraphQLEventLoopDispatcher.run(graphQL, input);
 ```
 
-2. All CompletableFutures in Fetcher need to specify Executor to achieve single-threaded effect. Three usage examples are given, you can choose according to the situation.
+4. All CompletableFutures in Fetcher need to specify Executor to achieve single-threaded effect. Three usage examples are given, you can choose according to the situation.
    1. It is recommended to use FixedExecutorFetchingEnvironment, which provides the wrapper function load of DataLoader and the function switchExecutor to switch Executor.
    2. Use GraphQLEventLoopDispatcher.getExecutor(environment) to get the Executor.
 
